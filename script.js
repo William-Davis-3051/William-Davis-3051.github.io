@@ -2,10 +2,10 @@ console.log('It working')
 
 //saving the theme that is in the local storage under application 
 let theme = localStorage.getItem('theme')
-//if the user has not been to the website before, default theme will be white 
+//if the user has not been to the website before, default theme will be dark 
 //else it will be the selected theme
 if(theme == null){
-	setTheme('light')
+	setTheme('dark')
 }else{
 	setTheme(theme)
 }
