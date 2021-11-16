@@ -1,0 +1,12 @@
+/*Color Theme for Purple*/
+:root{
+	--mainColor: #46344E; /*Main Color of the Website*/
+	--secondaryColor: #382a3f; /*Secondary Color of the Website*/
+	--borderColor: #1d1520; /*Border Color of the Website*/
+	--mainText: #fff; /*Controls Color*/
+	--secondaryText: #eeeeee;
+	--themeDotBorder: #FFF; /*Theme for border around theme color circle*/
+	--previewBg:rgb(29, 21, 32, 0.8); /*RGB color code for the box in Right Column*/
+	--previewShadow: #2b202f;
+	--buttonColor: #8534a3; /*Color of the send button on contact form*/
+}

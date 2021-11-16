@@ -1,0 +1,14 @@
+/*Color Theme for orange*/
+:root{
+	--mainColor: #e2b992; /*Main Color of the Website -- #15202B Original Blue*/
+	--secondaryColor: #e6c3a3; /*Secondary Color of the Website -- #192734 Original */
+	--borderColor: #fdd0a5; /*Border Color of the Website -- #164D56 Original*/
+	--mainText: beige; /*Controls Color*/
+	--secondaryText: #4b5156;
+	--themeDotBorder: white; /*Theme for border around theme color circle*/
+	--previewBg:rgb(251, 249, 243, 0.6); /*RGB color code for the box in Right Column*/
+	--previewShadow: #dfa977;
+	--inputField: inset 8px 8px 24px #ddbb9c,
+		inset -8px -8px 24px #efcbaa;
+	--buttonColor: black; /*Color of the send button on contact form*/
+}

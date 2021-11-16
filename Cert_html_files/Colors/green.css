@@ -1,0 +1,12 @@
+/*Color Theme for Green*/
+:root{
+	--mainColor: #606B56; /*Main Color of the Website*/
+	--secondaryColor: #515a48; /*Secondary Color of the Website*/
+	--borderColor: #161914; /*Border Color of the Website*/
+	--mainText: #fff; /*Controls Color*/
+	--secondaryText: #eeeeee;
+	--themeDotBorder: #FFF; /*Theme for border around theme color circle*/
+	--previewBg:rgb(81, 90, 72, 0.8); /*RGB color code for the box in Right Column*/
+	--previewShadow: #2a2f25;
+	--buttonColor: #669966; /*Color of the send button on contact form*/
+}

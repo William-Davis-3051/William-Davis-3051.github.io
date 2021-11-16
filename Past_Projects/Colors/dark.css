@@ -1,0 +1,12 @@
+/*Color for dark mode*/
+:root{
+	--mainColor: #181818; /*Main Color of the Website*/
+	--secondaryColor: #404040; /*Secondary Color of the Website*/
+	--borderColor: #282828; /*Border Color of the Website*/
+	--mainText: #ffffff; /*Controls Color*/
+	--secondaryText: #ffffff;
+	--themeDotBorder: #FFF; /*Theme for border around theme color circle*/
+	--previewBg: #60100b;/*rgb(81, 90, 72, 0.8); /*RGB color code for the box in Right Column*/
+	--previewShadow: #420c09;
+	--buttonColor: #404040; /*Color of the send button on contact form*/
+}
