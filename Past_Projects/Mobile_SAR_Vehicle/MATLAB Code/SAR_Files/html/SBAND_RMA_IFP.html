@@ -1,0 +1,635 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>SBAND_RMA_IFP</title><meta name="generator" content="MATLAB 9.10"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2021-12-16"><meta name="DC.source" content="SBAND_RMA_IFP.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">%</span>
+<span class="comment">%This RMA SAR algorithm was written by Gregory L. Charvat as part of his dissertation:</span>
+<span class="comment">%G. L. Charvat, ``A Low-Power Radar Imaging System," Ph.D. dissertation,</span>
+<span class="comment">%Dept. of Electrical and Computer Engineering, Michigan State University, East Lansing, MI, 2007.</span>
+<span class="comment">%</span>
+<span class="comment">%Please cite appropriately.</span>
+<span class="comment">%</span>
+<span class="comment">%This algorithm was based on:</span>
+<span class="comment">%Range Migration Algorithm from ch 10 of Spotlight Synthetic Aperture Radar</span>
+<span class="comment">%Signal Processing Algorithms, Carrara, Goodman, and Majewski</span>
+<span class="comment">%</span>
+
+<span class="comment">%***********************************************************************</span>
+<span class="comment">%a note on formatting, our convention is sif(Xa,t)</span>
+
+clear <span class="string">all</span>;
+load <span class="string">sif</span>;
+
+<span class="comment">%apply hanning window to data first</span>
+N = size(sif,2);
+<span class="keyword">for</span> ii = 1:N
+    H(ii) = 0.5 + 0.5*cos(2*pi*(ii-N/2)/N);
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> ii = 1:size(sif,1)
+    sif_h(ii,:) = sif(ii,:).*H;
+<span class="keyword">end</span>
+sif = sif_h;
+
+figcount = 1;
+close_as_you_go = 0;
+do_all_plots = 0;
+
+set(0,<span class="string">'defaultaxesfontsize'</span>,13); <span class="comment">%set font size on plots so we can see it in the dissertation</span>
+
+<span class="comment">% NOTE: the function 'dbv.m' is just dataout = 20*log10(abs(datain));</span>
+<span class="comment">%***********************************************************************</span>
+<span class="keyword">if</span> do_all_plots == 1,
+    figure(figcount);
+    S_image = angle(sif);
+    imagesc(Kr, Xa, S_image);
+    colormap(gray);
+    title(<span class="string">'Phase Before Along Track FFT'</span>);
+    xlabel(<span class="string">'K_r (rad/m)'</span>);
+    ylabel(<span class="string">'Synthetic Aperture Position, Xa (m)'</span>);
+    cbar = colorbar;
+    set(get(cbar, <span class="string">'Title'</span>), <span class="string">'String'</span>, <span class="string">'radians'</span>,<span class="string">'fontsize'</span>,13);
+    print(gcf, <span class="string">'-djpeg100'</span>, <span class="string">'phase_before_along_track_fft.jpg'</span>);
+    <span class="keyword">if</span> close_as_you_go == 1,
+        close(figcount);
+    <span class="keyword">end</span>
+    figcount = figcount + 1;
+<span class="keyword">end</span>
+
+<span class="comment">%along track FFT (in the slow time domain)</span>
+<span class="comment">%first, symetrically cross range zero pad so that the radar can squint</span>
+zpad = 2048; <span class="comment">%cross range symetrical zero pad</span>
+szeros = zeros(zpad, size(sif,2));
+<span class="keyword">for</span> ii = 1:size(sif,2)
+    index = round((zpad - size(sif,1))/2);
+    szeros(index+1:(index + size(sif,1)),ii) = sif(:,ii); <span class="comment">%symetrical zero pad</span>
+<span class="keyword">end</span>
+sif = szeros;
+clear <span class="string">ii</span> <span class="string">index</span> <span class="string">szeros</span>;
+
+
+S = fftshift(fft(sif, [], 1), 1);
+clear <span class="string">sif</span>;
+Kx = linspace((-pi/delta_x), (pi/delta_x), (size(S,1)));
+
+<span class="keyword">if</span> do_all_plots == 1,
+    figure(figcount);
+    S_image = dbv(S);
+    imagesc(Kr, Kx, S_image, [max(max(S_image))-40, max(max(S_image))]);
+    colormap(gray);
+    title(<span class="string">'Magnitude After Along Track FFT'</span>);
+    xlabel(<span class="string">'K_r (rad/m)'</span>);
+    ylabel(<span class="string">'K_x (rad/m)'</span>);
+    cbar = colorbar;
+    set(get(cbar, <span class="string">'Title'</span>), <span class="string">'String'</span>, <span class="string">'dB'</span>,<span class="string">'fontsize'</span>,13);
+    print(gcf, <span class="string">'-djpeg100'</span>, <span class="string">'mag_after_along_track_fft.jpg'</span>);
+    <span class="keyword">if</span> close_as_you_go == 1,
+        close(figcount);
+    <span class="keyword">end</span>
+    figcount = figcount + 1;
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> do_all_plots == 1,
+    figure(figcount);
+    S_image = angle(S);
+    imagesc(Kr, Kx, S_image);
+    colormap(gray);
+    title(<span class="string">'Phase After Along Track FFT'</span>);
+    xlabel(<span class="string">'K_r (rad/m)'</span>);
+    ylabel(<span class="string">'K_x (rad/m)'</span>);
+    cbar = colorbar;
+    set(get(cbar, <span class="string">'Title'</span>), <span class="string">'String'</span>, <span class="string">'radians'</span>,<span class="string">'fontsize'</span>,13);
+    print(gcf, <span class="string">'-djpeg100'</span>, <span class="string">'phase_after_along_track_fft.jpg'</span>);
+    <span class="keyword">if</span> close_as_you_go == 1,
+        close(figcount);
+    <span class="keyword">end</span>
+    figcount = figcount + 1;
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> do_all_plots == 1,
+    figure(figcount);
+    S_image = dbv(fftshift(fft(S, [], 2), 2));
+    imagesc(linspace(-0.5, 0.5, size(S, 2)), Kx, S_image, [max(max(S_image))-40, max(max(S_image))]);
+    colormap(gray);
+    title(<span class="string">'Magnitude of 2-D FFT of Input Data'</span>);
+    xlabel(<span class="string">'R_{relative} (dimensionless)'</span>);
+    ylabel(<span class="string">'K_x (rad/m)'</span>);
+    cbar = colorbar;
+    set(get(cbar, <span class="string">'Title'</span>), <span class="string">'String'</span>, <span class="string">'dB'</span>,<span class="string">'fontsize'</span>,13);
+    print(gcf, <span class="string">'-djpeg100'</span>, <span class="string">'mag_after_2D_fft.jpg'</span>);
+    <span class="keyword">if</span> close_as_you_go == 1,
+        close(figcount);
+    <span class="keyword">end</span>
+    figcount = figcount + 1;
+<span class="keyword">end</span>
+
+
+<span class="comment">%**********************************************************************</span>
+<span class="comment">%matched filter</span>
+
+<span class="comment">%create the matched filter eq 10.8</span>
+<span class="keyword">for</span> ii = 1:size(S,2) <span class="comment">%step thru each time step row to find phi_if</span>
+    <span class="keyword">for</span> jj = 1:size(S,1) <span class="comment">%step through each cross range in the current time step row</span>
+        <span class="comment">%phi_mf(jj,ii) = -Rs*Kr(ii) + Rs*sqrt((Kr(ii))^2 - (Kx(jj))^2);</span>
+        phi_mf(jj,ii) = Rs*sqrt((Kr(ii))^2 - (Kx(jj))^2);
+        Krr(jj,ii) = Kr(ii); <span class="comment">%generate 2d Kr for plotting purposes</span>
+        Kxx(jj,ii) = Kx(jj); <span class="comment">%generate 2d Kx for plotting purposes</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+smf = exp(j*phi_mf); <span class="comment">%%%%%%%%%%%%</span>
+
+<span class="comment">%note, we are in the Kx and Kr domain, thus our convention is S_mf(Kx,Kr)</span>
+
+<span class="comment">%appsly matched filter to S</span>
+S_mf = S.*smf;
+
+clear <span class="string">smf</span> <span class="string">phi_mf</span>;
+
+<span class="keyword">if</span> do_all_plots == 1,
+    figure(figcount);
+    S_image = angle(S);
+    imagesc(Kr, Kx, S_image);
+    colormap(gray);
+    title(<span class="string">'Phase After Matched Filter'</span>);
+    xlabel(<span class="string">'K_r (rad/m)'</span>);
+    ylabel(<span class="string">'K_x (rad/m)'</span>);
+    cbar = colorbar;
+    set(get(cbar, <span class="string">'Title'</span>), <span class="string">'String'</span>, <span class="string">'radians'</span>,<span class="string">'fontsize'</span>,13);
+    print(gcf, <span class="string">'-djpeg100'</span>, <span class="string">'phase_after_matched_filter.jpg'</span>);
+    <span class="keyword">if</span> close_as_you_go == 1,
+        close(figcount);
+    <span class="keyword">end</span>
+    figcount = figcount + 1;
+<span class="keyword">end</span>
+
+clear <span class="string">S</span>;
+
+<span class="keyword">if</span> do_all_plots == 1,
+    figure(figcount);
+    S_image = dbv(fftshift(fft(S_mf, [], 2), 2));
+    imagesc(linspace(-0.5, 0.5, size(S_mf, 2)), Kx, S_image, [max(max(S_image))-40, max(max(S_image))]);
+    colormap(gray);
+    title(<span class="string">'Magnitude of 2-D FFT of Matched Filtered Data'</span>);
+    xlabel(<span class="string">'R_{relative} (dimensionless)'</span>);
+    ylabel(<span class="string">'K_x (rad/m)'</span>);
+    cbar = colorbar;
+    set(get(cbar, <span class="string">'Title'</span>), <span class="string">'String'</span>, <span class="string">'dB'</span>,<span class="string">'fontsize'</span>,13);
+    print(gcf, <span class="string">'-djpeg100'</span>, <span class="string">'mag_after_downrange_fft_of_matched_filtered_data.jpg'</span>);
+    <span class="keyword">if</span> close_as_you_go == 1,
+        close(figcount);
+    <span class="keyword">end</span>
+    figcount = figcount + 1;
+<span class="keyword">end</span>
+
+
+
+<span class="comment">%**********************************************************************</span>
+<span class="comment">%perform the Stolt interpolation</span>
+
+<span class="comment">%FOR DATA ANALYSIS</span>
+kstart =73;
+kstop = 108.5;
+
+<span class="comment">%kstart = 95;</span>
+<span class="comment">%kstop = 102;</span>
+
+
+Ky_even = linspace(kstart, kstop, 1024); <span class="comment">%create evenly spaced Ky for interp for real data</span>
+
+clear <span class="string">Ky</span> <span class="string">S_St</span>;
+<span class="comment">%for ii = 1:size(Kx,2)</span>
+count = 0;
+<span class="keyword">for</span> ii = 1:zpad;
+<span class="comment">%for ii = round(.2*zpad):round((1-.2)*zpad)</span>
+    count = count + 1;
+    Ky(count,:) = sqrt(Kr.^2 - Kx(ii)^2);
+    <span class="comment">%S_st(ii,:) = (interp1(Ky(ii,:), S_mf(ii,:), Ky_even)).*H;</span>
+    S_st(count,:) = (interp1(Ky(count,:), S_mf(ii,:), Ky_even));
+<span class="keyword">end</span>
+S_st(find(isnan(S_st))) = 1E-30; <span class="comment">%set all Nan values to 0</span>
+clear <span class="string">S_mf</span> <span class="string">ii</span> <span class="string">Ky</span>;
+
+<span class="keyword">if</span> do_all_plots == 1,
+    figure(figcount);
+    S_image = angle(S_st);
+    imagesc(Ky_even, Kx, S_image);
+    <span class="comment">%imagesc(S_image);</span>
+    colormap(gray);
+    title(<span class="string">'Phase After Stolt Interpolation'</span>);
+    xlabel(<span class="string">'K_y (rad/m)'</span>);
+    ylabel(<span class="string">'K_x (rad/m)'</span>);
+    cbar = colorbar;
+    set(get(cbar, <span class="string">'Title'</span>), <span class="string">'String'</span>, <span class="string">'radians'</span>,<span class="string">'fontsize'</span>,13);
+    print(gcf, <span class="string">'-djpeg100'</span>, <span class="string">'phase_after_stolt_interpolation.jpg'</span>);
+    <span class="keyword">if</span> close_as_you_go == 1,
+        close(figcount);
+    <span class="keyword">end</span>
+    figcount = figcount + 1;
+<span class="keyword">end</span>
+
+<span class="comment">%apply hanning window to data, cleans up data ALOT</span>
+N = size(Ky_even,2);
+<span class="keyword">for</span> ii = 1:N
+    H(ii) = 0.5 + 0.5*cos(2*pi*(ii-N/2)/N);
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> ii = 1:size(S_st,1)
+    S_sth(ii,:) = S_st(ii,:).*H;
+<span class="keyword">end</span>
+<span class="comment">%S_st = S_sth;</span>
+
+<span class="comment">%*********************************************************************</span>
+<span class="comment">%perform the inverse FFT's</span>
+<span class="comment">%new notation:  v(x,y), where x is crossrange</span>
+<span class="comment">%first in the range dimmension</span>
+clear <span class="string">v</span> <span class="string">Kr</span> <span class="string">Krr</span> <span class="string">Kxx</span> <span class="string">Ky_even</span>;
+v = ifft2(S_st,(size(S_st,1)*4),(size(S_st,2)*4));
+
+<span class="comment">%bw = (3E8/(4*pi))*(max(xx)-min(xx));</span>
+bw = 3E8*(kstop-kstart)/(4*pi);
+max_range = (3E8*size(S_st,2)/(2*bw))*1/.3048;
+    figure(figcount);
+    S_image = v; <span class="comment">%edited to scale range to d^3/2</span>
+    S_image = fliplr(rot90(S_image));
+    cr1 = -80; <span class="comment">%(ft)</span>
+    cr2 = 80; <span class="comment">%(ft)</span>
+    dr1 = 1 + Rs/.3048; <span class="comment">%(ft)</span>
+    dr2 = 350 + Rs/.3048; <span class="comment">%(ft)</span>
+    <span class="comment">%data truncation</span>
+    dr_index1 = round((dr1/max_range)*size(S_image,1));
+    dr_index2 = round((dr2/max_range)*size(S_image,1));
+    cr_index1 = round(( (cr1+zpad*delta_x/(2*.3048)) /(zpad*delta_x/.3048))*size(S_image,2));
+    cr_index2 = round(( (cr2+zpad*delta_x/(2*.3048))/(zpad*delta_x/.3048))*size(S_image,2));
+    trunc_image = S_image(dr_index1:dr_index2,cr_index1:cr_index2);
+    downrange = linspace(-1*dr1,-1*dr2, size(trunc_image,1)) + Rs/.3048;
+    crossrange = linspace(cr1, cr2, size(trunc_image, 2));
+    <span class="comment">%scale down range columns by range^(3/2), delete to make like</span>
+    <span class="comment">%dissertation again</span>
+    clear <span class="string">ii</span>;
+    <span class="keyword">for</span> ii = 1:size(trunc_image,2)
+        trunc_image(:,ii) = (trunc_image(:,ii)').*(abs(downrange*.3048)).^(3/2);
+    <span class="keyword">end</span>
+    trunc_image = dbv(trunc_image); <span class="comment">%added to scale to d^3/2</span>
+    imagesc(crossrange, downrange, trunc_image, [max(max(trunc_image))-40, max(max(trunc_image))-0]);
+    colormap(<span class="string">'default'</span>);
+    title(<span class="string">'Final Image'</span>);
+    ylabel(<span class="string">'Downrange (ft)'</span>);
+    xlabel(<span class="string">'Crossrange (ft)'</span>);
+    axis <span class="string">equal</span>;
+    cbar = colorbar;
+    set(get(cbar, <span class="string">'Title'</span>), <span class="string">'String'</span>, <span class="string">'dB'</span>,<span class="string">'fontsize'</span>,13);
+    print(gcf, <span class="string">'-djpeg100'</span>, <span class="string">'final_image.jpg'</span>);
+    <span class="keyword">if</span> close_as_you_go == 1,
+        close(figcount);
+    <span class="keyword">end</span>
+    figcount = figcount + 1;
+</pre><img vspace="5" hspace="5" src="SBAND_RMA_IFP_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2021a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%
+%This RMA SAR algorithm was written by Gregory L. Charvat as part of his dissertation:
+%G. L. Charvat, ``A Low-Power Radar Imaging System," Ph.D. dissertation,
+%Dept. of Electrical and Computer Engineering, Michigan State University, East Lansing, MI, 2007.
+%
+%Please cite appropriately.  
+%
+%This algorithm was based on:
+%Range Migration Algorithm from ch 10 of Spotlight Synthetic Aperture Radar
+%Signal Processing Algorithms, Carrara, Goodman, and Majewski
+%
+
+%***********************************************************************
+%a note on formatting, our convention is sif(Xa,t)
+
+clear all;
+load sif;
+
+%apply hanning window to data first
+N = size(sif,2);
+for ii = 1:N
+    H(ii) = 0.5 + 0.5*cos(2*pi*(ii-N/2)/N);
+end
+
+for ii = 1:size(sif,1)
+    sif_h(ii,:) = sif(ii,:).*H;
+end
+sif = sif_h;
+
+figcount = 1;
+close_as_you_go = 0;
+do_all_plots = 0;
+
+set(0,'defaultaxesfontsize',13); %set font size on plots so we can see it in the dissertation
+
+% NOTE: the function 'dbv.m' is just dataout = 20*log10(abs(datain));
+%***********************************************************************
+if do_all_plots == 1,
+    figure(figcount);
+    S_image = angle(sif);
+    imagesc(Kr, Xa, S_image);
+    colormap(gray);
+    title('Phase Before Along Track FFT');
+    xlabel('K_r (rad/m)');
+    ylabel('Synthetic Aperture Position, Xa (m)');
+    cbar = colorbar;
+    set(get(cbar, 'Title'), 'String', 'radians','fontsize',13); 
+    print(gcf, '-djpeg100', 'phase_before_along_track_fft.jpg');
+    if close_as_you_go == 1,
+        close(figcount);
+    end
+    figcount = figcount + 1;
+end
+
+%along track FFT (in the slow time domain)
+%first, symetrically cross range zero pad so that the radar can squint
+zpad = 2048; %cross range symetrical zero pad
+szeros = zeros(zpad, size(sif,2));
+for ii = 1:size(sif,2)
+    index = round((zpad - size(sif,1))/2);
+    szeros(index+1:(index + size(sif,1)),ii) = sif(:,ii); %symetrical zero pad
+end
+sif = szeros;
+clear ii index szeros;
+
+
+S = fftshift(fft(sif, [], 1), 1);
+clear sif;
+Kx = linspace((-pi/delta_x), (pi/delta_x), (size(S,1)));
+
+if do_all_plots == 1,
+    figure(figcount);
+    S_image = dbv(S);
+    imagesc(Kr, Kx, S_image, [max(max(S_image))-40, max(max(S_image))]);
+    colormap(gray);
+    title('Magnitude After Along Track FFT');
+    xlabel('K_r (rad/m)');
+    ylabel('K_x (rad/m)');
+    cbar = colorbar;
+    set(get(cbar, 'Title'), 'String', 'dB','fontsize',13); 
+    print(gcf, '-djpeg100', 'mag_after_along_track_fft.jpg');
+    if close_as_you_go == 1,
+        close(figcount);
+    end
+    figcount = figcount + 1;
+end
+
+if do_all_plots == 1,
+    figure(figcount);
+    S_image = angle(S);
+    imagesc(Kr, Kx, S_image);
+    colormap(gray);
+    title('Phase After Along Track FFT');
+    xlabel('K_r (rad/m)');
+    ylabel('K_x (rad/m)');
+    cbar = colorbar;
+    set(get(cbar, 'Title'), 'String', 'radians','fontsize',13); 
+    print(gcf, '-djpeg100', 'phase_after_along_track_fft.jpg');
+    if close_as_you_go == 1,
+        close(figcount);
+    end
+    figcount = figcount + 1;
+end
+
+if do_all_plots == 1,
+    figure(figcount);
+    S_image = dbv(fftshift(fft(S, [], 2), 2));
+    imagesc(linspace(-0.5, 0.5, size(S, 2)), Kx, S_image, [max(max(S_image))-40, max(max(S_image))]);
+    colormap(gray);
+    title('Magnitude of 2-D FFT of Input Data');
+    xlabel('R_{relative} (dimensionless)');
+    ylabel('K_x (rad/m)');
+    cbar = colorbar;
+    set(get(cbar, 'Title'), 'String', 'dB','fontsize',13); 
+    print(gcf, '-djpeg100', 'mag_after_2D_fft.jpg');
+    if close_as_you_go == 1,
+        close(figcount);
+    end
+    figcount = figcount + 1;
+end
+
+
+%**********************************************************************
+%matched filter
+
+%create the matched filter eq 10.8
+for ii = 1:size(S,2) %step thru each time step row to find phi_if
+    for jj = 1:size(S,1) %step through each cross range in the current time step row
+        %phi_mf(jj,ii) = -Rs*Kr(ii) + Rs*sqrt((Kr(ii))^2 - (Kx(jj))^2);
+        phi_mf(jj,ii) = Rs*sqrt((Kr(ii))^2 - (Kx(jj))^2);
+        Krr(jj,ii) = Kr(ii); %generate 2d Kr for plotting purposes
+        Kxx(jj,ii) = Kx(jj); %generate 2d Kx for plotting purposes
+    end
+end
+smf = exp(j*phi_mf); %%%%%%%%%%%%
+
+%note, we are in the Kx and Kr domain, thus our convention is S_mf(Kx,Kr)
+
+%appsly matched filter to S
+S_mf = S.*smf;
+
+clear smf phi_mf;
+
+if do_all_plots == 1,
+    figure(figcount);
+    S_image = angle(S);
+    imagesc(Kr, Kx, S_image);
+    colormap(gray);
+    title('Phase After Matched Filter');
+    xlabel('K_r (rad/m)');
+    ylabel('K_x (rad/m)');
+    cbar = colorbar;
+    set(get(cbar, 'Title'), 'String', 'radians','fontsize',13); 
+    print(gcf, '-djpeg100', 'phase_after_matched_filter.jpg');
+    if close_as_you_go == 1,
+        close(figcount);
+    end
+    figcount = figcount + 1;
+end
+
+clear S;
+
+if do_all_plots == 1,
+    figure(figcount);
+    S_image = dbv(fftshift(fft(S_mf, [], 2), 2));
+    imagesc(linspace(-0.5, 0.5, size(S_mf, 2)), Kx, S_image, [max(max(S_image))-40, max(max(S_image))]);
+    colormap(gray);
+    title('Magnitude of 2-D FFT of Matched Filtered Data');
+    xlabel('R_{relative} (dimensionless)');
+    ylabel('K_x (rad/m)');
+    cbar = colorbar;
+    set(get(cbar, 'Title'), 'String', 'dB','fontsize',13); 
+    print(gcf, '-djpeg100', 'mag_after_downrange_fft_of_matched_filtered_data.jpg');
+    if close_as_you_go == 1,
+        close(figcount);
+    end
+    figcount = figcount + 1;
+end
+
+
+
+%**********************************************************************
+%perform the Stolt interpolation
+
+%FOR DATA ANALYSIS
+kstart =73;
+kstop = 108.5;
+
+%kstart = 95;
+%kstop = 102;
+
+
+Ky_even = linspace(kstart, kstop, 1024); %create evenly spaced Ky for interp for real data
+
+clear Ky S_St;
+%for ii = 1:size(Kx,2)
+count = 0;
+for ii = 1:zpad;
+%for ii = round(.2*zpad):round((1-.2)*zpad)
+    count = count + 1;
+    Ky(count,:) = sqrt(Kr.^2 - Kx(ii)^2);
+    %S_st(ii,:) = (interp1(Ky(ii,:), S_mf(ii,:), Ky_even)).*H;
+    S_st(count,:) = (interp1(Ky(count,:), S_mf(ii,:), Ky_even));
+end
+S_st(find(isnan(S_st))) = 1E-30; %set all Nan values to 0
+clear S_mf ii Ky;
+
+if do_all_plots == 1,
+    figure(figcount);
+    S_image = angle(S_st);
+    imagesc(Ky_even, Kx, S_image);
+    %imagesc(S_image);
+    colormap(gray);
+    title('Phase After Stolt Interpolation');
+    xlabel('K_y (rad/m)');
+    ylabel('K_x (rad/m)');
+    cbar = colorbar;
+    set(get(cbar, 'Title'), 'String', 'radians','fontsize',13); 
+    print(gcf, '-djpeg100', 'phase_after_stolt_interpolation.jpg');
+    if close_as_you_go == 1,
+        close(figcount);
+    end
+    figcount = figcount + 1;
+end
+
+%apply hanning window to data, cleans up data ALOT
+N = size(Ky_even,2);
+for ii = 1:N
+    H(ii) = 0.5 + 0.5*cos(2*pi*(ii-N/2)/N);
+end
+
+for ii = 1:size(S_st,1)
+    S_sth(ii,:) = S_st(ii,:).*H;
+end
+%S_st = S_sth;
+
+%*********************************************************************
+%perform the inverse FFT's
+%new notation:  v(x,y), where x is crossrange
+%first in the range dimmension
+clear v Kr Krr Kxx Ky_even;
+v = ifft2(S_st,(size(S_st,1)*4),(size(S_st,2)*4));
+
+%bw = (3E8/(4*pi))*(max(xx)-min(xx));
+bw = 3E8*(kstop-kstart)/(4*pi);
+max_range = (3E8*size(S_st,2)/(2*bw))*1/.3048;
+    figure(figcount);
+    S_image = v; %edited to scale range to d^3/2
+    S_image = fliplr(rot90(S_image));
+    cr1 = -80; %(ft)
+    cr2 = 80; %(ft)
+    dr1 = 1 + Rs/.3048; %(ft)
+    dr2 = 350 + Rs/.3048; %(ft)
+    %data truncation
+    dr_index1 = round((dr1/max_range)*size(S_image,1));
+    dr_index2 = round((dr2/max_range)*size(S_image,1));
+    cr_index1 = round(( (cr1+zpad*delta_x/(2*.3048)) /(zpad*delta_x/.3048))*size(S_image,2));
+    cr_index2 = round(( (cr2+zpad*delta_x/(2*.3048))/(zpad*delta_x/.3048))*size(S_image,2));
+    trunc_image = S_image(dr_index1:dr_index2,cr_index1:cr_index2);
+    downrange = linspace(-1*dr1,-1*dr2, size(trunc_image,1)) + Rs/.3048;
+    crossrange = linspace(cr1, cr2, size(trunc_image, 2));
+    %scale down range columns by range^(3/2), delete to make like
+    %dissertation again
+    clear ii;
+    for ii = 1:size(trunc_image,2)
+        trunc_image(:,ii) = (trunc_image(:,ii)').*(abs(downrange*.3048)).^(3/2);
+    end
+    trunc_image = dbv(trunc_image); %added to scale to d^3/2
+    imagesc(crossrange, downrange, trunc_image, [max(max(trunc_image))-40, max(max(trunc_image))-0]);  
+    colormap('default');
+    title('Final Image');
+    ylabel('Downrange (ft)');
+    xlabel('Crossrange (ft)');
+    axis equal;
+    cbar = colorbar;
+    set(get(cbar, 'Title'), 'String', 'dB','fontsize',13); 
+    print(gcf, '-djpeg100', 'final_image.jpg');
+    if close_as_you_go == 1,
+        close(figcount);
+    end
+    figcount = figcount + 1;
+##### SOURCE END #####
+--></body></html>

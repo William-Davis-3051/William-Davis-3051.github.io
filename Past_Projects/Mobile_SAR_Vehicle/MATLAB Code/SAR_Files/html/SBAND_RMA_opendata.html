@@ -1,0 +1,319 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>SBAND_RMA_opendata</title><meta name="generator" content="MATLAB 9.10"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2021-12-16"><meta name="DC.source" content="SBAND_RMA_opendata.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">%MIT IAP Radar Course 2011</span>
+<span class="comment">%Resource: Build a Small Radar System Capable of Sensing Range, Doppler,</span>
+<span class="comment">%and Synthetic Aperture Radar Imaging</span>
+<span class="comment">%</span>
+<span class="comment">%Gregory L. Charvat</span>
+
+<span class="comment">%SAR algorithm from:</span>
+<span class="comment">%Range Migration Algorithm from ch 10 of Spotlight Synthetic Aperture Radar</span>
+<span class="comment">%Signal Processing Algorithms, Carrara, Goodman, and Majewski</span>
+
+<span class="comment">%NOTE: set up-ramp sweep from 2-3.2V to stay within ISM band</span>
+<span class="comment">%change fstart and fstop bellow when in ISM band</span>
+
+<span class="comment">%-------------------------------------------%</span>
+<span class="comment">%Process raw data here</span>
+clear <span class="string">all</span>;
+close <span class="string">all</span>;
+
+<span class="comment">%read the raw data .wave file here</span>
+[Y,FS] = audioread([<span class="string">'towardswarehouse.wav'</span>]);
+
+<span class="comment">%constants</span>
+c = 3E8; <span class="comment">%(m/s) speed of light</span>
+
+<span class="comment">%radar parameters</span>
+Tp = 20E-3; <span class="comment">%(s) pulse time</span>
+Trp = 0.25; <span class="comment">%(s) min range profile time duration</span>
+N = Tp*FS; <span class="comment">%# of samples per pulse</span>
+fstart = 2260E6; <span class="comment">%(Hz) LFM start frequency</span>
+fstop = 2590E6; <span class="comment">%(Hz) LFM stop frequency</span>
+<span class="comment">%fstart = 2402E6; %(Hz) LFM start frequency for ISM band</span>
+<span class="comment">%fstop = 2495E6; %(Hz) LFM stop frequency for ISM band</span>
+BW = fstop-fstart; <span class="comment">%(Hz) transmti bandwidth</span>
+f = linspace(fstart, fstop, N/2); <span class="comment">%instantaneous transmit frequency</span>
+
+<span class="comment">%the input appears to be inverted</span>
+trig = -1*Y(:,1);
+s = -1*Y(:,2);
+clear <span class="string">Y</span>;
+
+<span class="comment">%parse data here by position (silence between recorded data)</span>
+rpstart = abs(trig)&gt;mean(abs(trig));
+count = 0;
+Nrp = Trp*FS; <span class="comment">%min # samples between range profiles</span>
+
+<span class="keyword">for</span> ii = Nrp+1:size(rpstart,1)-Nrp
+    <span class="keyword">if</span> rpstart(ii) == 1 &amp; sum(rpstart(ii-Nrp:ii-1)) == 0
+        count = count + 1;
+        RP(count,:) = s(ii:ii+Nrp-1);
+        RPtrig(count,:) = trig(ii:ii+Nrp-1);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">%parse data by pulse</span>
+count = 0;
+thresh = 0.08;
+clear <span class="string">ii</span>;
+<span class="keyword">for</span> jj = 1:size(RP,1)
+    <span class="comment">%clear SIF;</span>
+    SIF = zeros(N,1);
+    start = (RPtrig(jj,:)&gt; thresh);
+    count = 0;
+    jj;
+    <span class="keyword">for</span> ii = 12:(size(start,2)-2*N)
+        [Y I] =  max(RPtrig(jj,ii:ii+2*N));
+        <span class="keyword">if</span> mean(start(ii-10:ii-2)) == 0 &amp; I == 1
+            count = count + 1;
+            SIF = RP(jj,ii:ii+N-1)' + SIF;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="comment">%hilbert transform</span>
+    q = ifft(SIF/count);
+    sif(jj,:) = fft(q(size(q,1)/2+1:size(q,1)));
+<span class="keyword">end</span>
+sif(find(isnan(sif))) = 1E-30; <span class="comment">%set all Nan values to 0</span>
+
+<span class="comment">%SAR data should be ready here</span>
+clear <span class="string">s</span>;
+s = sif;
+save <span class="string">routsidewarehouse2</span> <span class="string">s</span>; <span class="comment">%for image data</span>
+
+<span class="comment">%-------------------------------------------%</span>
+<span class="comment">%load additional varaibles and setup constants for radar here</span>
+clear <span class="string">all</span>;
+c = 3E8; <span class="comment">%(m/s) speed of light</span>
+
+<span class="comment">%load IQ converted data here</span>
+load <span class="string">routsidewarehouse2</span> <span class="string">s</span>; <span class="comment">%load variable sif %for image data</span>
+
+<span class="keyword">for</span> ii = 1:size(s,1)
+    s(ii,:) = s(ii,:) - mean(s,1);
+<span class="keyword">end</span>
+
+<span class="comment">%sif = s-sif_sub; %perform coherent background subtraction</span>
+<span class="comment">%sif = sif_sub; %image just the background</span>
+sif = s; <span class="comment">%image without background subtraction</span>
+clear <span class="string">s</span>;
+clear <span class="string">sif_sub</span>;
+
+<span class="comment">%***********************************************************************</span>
+<span class="comment">%radar parameters</span>
+fc = (2590E6 - 2260E6)/2 + 2260E6; <span class="comment">%(Hz) center radar frequency</span>
+B = (2590E6 - 2260E6); <span class="comment">%(hz) bandwidth</span>
+cr = B/20E-3; <span class="comment">%(Hz/sec) chirp rate</span>
+Tp = 20E-3; <span class="comment">%(sec) pulse width</span>
+<span class="comment">%VERY IMPORTANT, change Rs to distance to cal target</span>
+Rs = 25*.3048; <span class="comment">%(m) y coordinate to scene center (down range), make this value equal to distance to cal target</span>
+<span class="comment">%Rs = 0;</span>
+Xa = 0; <span class="comment">%(m) beginning of new aperture length</span>
+delta_x = 2*(1/12)*0.3048; <span class="comment">%(m) 2 inch antenna spacing</span>
+L = delta_x*(size(sif,1)); <span class="comment">%(m) aperture length</span>
+Xa = linspace(-L/2, L/2, (L/delta_x)); <span class="comment">%(m) cross range position of radar on aperture L</span>
+Za = 0;
+Ya = Rs; <span class="comment">%THIS IS VERY IMPORTANT, SEE GEOMETRY FIGURE 10.6</span>
+t = linspace(0, Tp, size(sif,2)); <span class="comment">%(s) fast time, CHECK SAMPLE RATE</span>
+Kr = linspace(((4*pi/c)*(fc - B/2)), ((4*pi/c)*(fc + B/2)), (size(t,2)));
+
+<span class="comment">%Save background subtracted and callibrated data</span>
+save <span class="string">sif</span> <span class="string">sif</span> <span class="string">delta_x</span> <span class="string">Rs</span> <span class="string">Kr</span> <span class="string">Xa</span>;
+<span class="comment">%clear all;</span>
+
+<span class="comment">%run IFP</span>
+SBAND_RMA_IFP;
+</pre><img vspace="5" hspace="5" src="SBAND_RMA_opendata_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2021a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%MIT IAP Radar Course 2011
+%Resource: Build a Small Radar System Capable of Sensing Range, Doppler, 
+%and Synthetic Aperture Radar Imaging 
+%
+%Gregory L. Charvat
+
+%SAR algorithm from:
+%Range Migration Algorithm from ch 10 of Spotlight Synthetic Aperture Radar
+%Signal Processing Algorithms, Carrara, Goodman, and Majewski
+
+%NOTE: set up-ramp sweep from 2-3.2V to stay within ISM band
+%change fstart and fstop bellow when in ISM band
+
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-%
+%Process raw data here
+clear all;
+close all;
+
+%read the raw data .wave file here
+[Y,FS] = audioread(['towardswarehouse.wav']);
+
+%constants
+c = 3E8; %(m/s) speed of light
+
+%radar parameters
+Tp = 20E-3; %(s) pulse time
+Trp = 0.25; %(s) min range profile time duration
+N = Tp*FS; %# of samples per pulse
+fstart = 2260E6; %(Hz) LFM start frequency
+fstop = 2590E6; %(Hz) LFM stop frequency
+%fstart = 2402E6; %(Hz) LFM start frequency for ISM band
+%fstop = 2495E6; %(Hz) LFM stop frequency for ISM band
+BW = fstop-fstart; %(Hz) transmti bandwidth
+f = linspace(fstart, fstop, N/2); %instantaneous transmit frequency
+
+%the input appears to be inverted
+trig = -1*Y(:,1);
+s = -1*Y(:,2);
+clear Y;
+
+%parse data here by position (silence between recorded data)
+rpstart = abs(trig)>mean(abs(trig));
+count = 0;
+Nrp = Trp*FS; %min # samples between range profiles
+
+for ii = Nrp+1:size(rpstart,1)-Nrp
+    if rpstart(ii) == 1 & sum(rpstart(ii-Nrp:ii-1)) == 0
+        count = count + 1;
+        RP(count,:) = s(ii:ii+Nrp-1);
+        RPtrig(count,:) = trig(ii:ii+Nrp-1);
+    end
+end
+
+%parse data by pulse
+count = 0;
+thresh = 0.08;
+clear ii;
+for jj = 1:size(RP,1)
+    %clear SIF;
+    SIF = zeros(N,1);
+    start = (RPtrig(jj,:)> thresh);
+    count = 0;
+    jj;
+    for ii = 12:(size(start,2)-2*N)
+        [Y I] =  max(RPtrig(jj,ii:ii+2*N));
+        if mean(start(ii-10:ii-2)) == 0 & I == 1
+            count = count + 1;
+            SIF = RP(jj,ii:ii+N-1)' + SIF;
+        end
+    end
+    %hilbert transform
+    q = ifft(SIF/count);
+    sif(jj,:) = fft(q(size(q,1)/2+1:size(q,1)));
+end
+sif(find(isnan(sif))) = 1E-30; %set all Nan values to 0
+
+%SAR data should be ready here
+clear s;
+s = sif;
+save routsidewarehouse2 s; %for image data
+
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-%
+%load additional varaibles and setup constants for radar here
+clear all;
+c = 3E8; %(m/s) speed of light
+
+%load IQ converted data here
+load routsidewarehouse2 s; %load variable sif %for image data
+
+for ii = 1:size(s,1)
+    s(ii,:) = s(ii,:) - mean(s,1);
+end
+
+%sif = s-sif_sub; %perform coherent background subtraction
+%sif = sif_sub; %image just the background
+sif = s; %image without background subtraction
+clear s;
+clear sif_sub;
+
+%***********************************************************************
+%radar parameters
+fc = (2590E6 - 2260E6)/2 + 2260E6; %(Hz) center radar frequency
+B = (2590E6 - 2260E6); %(hz) bandwidth
+cr = B/20E-3; %(Hz/sec) chirp rate
+Tp = 20E-3; %(sec) pulse width
+%VERY IMPORTANT, change Rs to distance to cal target
+Rs = 25*.3048; %(m) y coordinate to scene center (down range), make this value equal to distance to cal target
+%Rs = 0;
+Xa = 0; %(m) beginning of new aperture length
+delta_x = 2*(1/12)*0.3048; %(m) 2 inch antenna spacing
+L = delta_x*(size(sif,1)); %(m) aperture length
+Xa = linspace(-L/2, L/2, (L/delta_x)); %(m) cross range position of radar on aperture L
+Za = 0;
+Ya = Rs; %THIS IS VERY IMPORTANT, SEE GEOMETRY FIGURE 10.6
+t = linspace(0, Tp, size(sif,2)); %(s) fast time, CHECK SAMPLE RATE
+Kr = linspace(((4*pi/c)*(fc - B/2)), ((4*pi/c)*(fc + B/2)), (size(t,2)));
+
+%Save background subtracted and callibrated data
+save sif sif delta_x Rs Kr Xa;
+%clear all;
+
+%run IFP
+SBAND_RMA_IFP;
+##### SOURCE END #####
+--></body></html>
